@@ -1,0 +1,575 @@
+basePath: /
+definitions:
+  domain.AssignUserToGroupRequest:
+    properties:
+      group_id:
+        type: string
+    required:
+    - group_id
+    type: object
+  domain.CheckInRequest:
+    properties:
+      latitude:
+        type: number
+      longitude:
+        type: number
+      note:
+        type: string
+      organization_id:
+        type: string
+      task_id:
+        type: string
+    required:
+    - latitude
+    - longitude
+    - organization_id
+    type: object
+  domain.ErrorResponse:
+    properties:
+      errors:
+        additionalProperties:
+          items:
+            type: string
+          type: array
+        type: object
+      message:
+        type: string
+    type: object
+  domain.Group:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      manager_id:
+        type: string
+      name:
+        type: string
+      org_id:
+        type: string
+      shift_id:
+        type: string
+    required:
+    - name
+    type: object
+  domain.GroupPerformanceReport:
+    properties:
+      assigned_shift:
+        type: string
+      attendance_rate:
+        type: string
+      group_name:
+        type: string
+      total_late_checkins:
+        type: integer
+    type: object
+  domain.InviteEmployeeRequest:
+    properties:
+      email:
+        type: string
+      group_id:
+        type: string
+      role:
+        enum:
+        - MANAGER
+        - EMPLOYEE
+        type: string
+    required:
+    - email
+    - role
+    type: object
+  domain.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  domain.Organization:
+    properties:
+      created_at:
+        type: string
+      default_location_lat:
+        type: number
+      default_location_long:
+        type: number
+      email:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+    required:
+    - default_location_lat
+    - default_location_long
+    - email
+    - name
+    type: object
+  domain.RegisterRequest:
+    properties:
+      email:
+        type: string
+      full_name:
+        minLength: 2
+        type: string
+      password:
+        minLength: 6
+        type: string
+      phone_number:
+        type: string
+    required:
+    - email
+    - full_name
+    - password
+    - phone_number
+    type: object
+  domain.Shift:
+    properties:
+      allowed_late_minutes:
+        type: integer
+      created_at:
+        type: string
+      end_time:
+        description: HH:MM
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      org_id:
+        type: string
+      start_time:
+        description: HH:MM
+        type: string
+      timezone:
+        type: string
+      working_days:
+        items:
+          type: string
+        minItems: 1
+        type: array
+    required:
+    - end_time
+    - name
+    - start_time
+    - timezone
+    - working_days
+    type: object
+  domain.Task:
+    properties:
+      assigned_user_id:
+        type: string
+      created_at:
+        type: string
+      geofencing_enabled:
+        type: boolean
+      id:
+        type: string
+      latitude:
+        type: number
+      location_name:
+        type: string
+      longitude:
+        type: number
+      org_id:
+        type: string
+      radius_meters:
+        type: integer
+      title:
+        type: string
+    required:
+    - title
+    type: object
+  domain.User:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      full_name:
+        type: string
+      id:
+        type: string
+      phone_number:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: REST API for Check-In/Out Service
+  title: Check-In Service API
+  version: "1.0"
+paths:
+  /attendance/check-in:
+    post:
+      consumes:
+      - application/json
+      description: Perform a check-in (General or Task-based)
+      parameters:
+      - description: Check-In Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.CheckInRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: invalid request body or validation errors
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Check-in
+      tags:
+      - Attendance
+  /attendance/check-out:
+    post:
+      consumes:
+      - application/json
+      description: Perform a check-out
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: bad request
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Check-out
+      tags:
+      - Attendance
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Login with email and password to get JWT token
+      parameters:
+      - description: Login Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: invalid request body or validation errors
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+        "401":
+          description: unauthorized
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+      summary: Login user
+      tags:
+      - Auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Register a new user with the provided details
+      parameters:
+      - description: Register Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/domain.User'
+        "400":
+          description: invalid request body or validation errors
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+      summary: Register a new user
+      tags:
+      - Auth
+  /organizations:
+    post:
+      consumes:
+      - application/json
+      description: Create a new organization and assign the creator as OWNER
+      parameters:
+      - description: Organization Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.Organization'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/domain.Organization'
+        "400":
+          description: invalid request body or validation errors
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new organization
+      tags:
+      - Organization
+  /organizations/{org_id}/groups:
+    post:
+      consumes:
+      - application/json
+      description: Create a new group/team for the organization
+      parameters:
+      - description: Organization ID
+        in: path
+        name: org_id
+        required: true
+        type: string
+      - description: Group Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.Group'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/domain.Group'
+        "400":
+          description: invalid request body or validation errors
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a group
+      tags:
+      - Organization
+  /organizations/{org_id}/invitations:
+    post:
+      consumes:
+      - application/json
+      description: Invite an employee to the organization
+      parameters:
+      - description: Organization ID
+        in: path
+        name: org_id
+        required: true
+        type: string
+      - description: Invite Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.InviteEmployeeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: invalid request body or validation errors
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Invite an employee
+      tags:
+      - Organization
+  /organizations/{org_id}/members/{user_id}:
+    put:
+      consumes:
+      - application/json
+      description: Assign a user to a specific group within the organization
+      parameters:
+      - description: Organization ID
+        in: path
+        name: org_id
+        required: true
+        type: string
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - description: Assign Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.AssignUserToGroupRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: invalid request body or validation errors
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Assign user to group
+      tags:
+      - Organization
+  /organizations/{org_id}/reports/groups/{group_id}:
+    get:
+      consumes:
+      - application/json
+      description: Get performance report for a specific group
+      parameters:
+      - description: Organization ID
+        in: path
+        name: org_id
+        required: true
+        type: string
+      - description: Group ID
+        in: path
+        name: group_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.GroupPerformanceReport'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get group performance report
+      tags:
+      - Report
+  /organizations/{org_id}/shifts:
+    post:
+      consumes:
+      - application/json
+      description: Create a new shift for the organization
+      parameters:
+      - description: Organization ID
+        in: path
+        name: org_id
+        required: true
+        type: string
+      - description: Shift Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.Shift'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/domain.Shift'
+        "400":
+          description: invalid request body or validation errors
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a shift
+      tags:
+      - Organization
+  /organizations/{org_id}/tasks:
+    post:
+      consumes:
+      - application/json
+      description: Create a new task for the organization
+      parameters:
+      - description: Organization ID
+        in: path
+        name: org_id
+        required: true
+        type: string
+      - description: Task Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.Task'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/domain.Task'
+        "400":
+          description: invalid request body or validation errors
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a task
+      tags:
+      - Task
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
