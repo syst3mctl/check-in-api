@@ -14,6 +14,14 @@ type UserRepository interface {
 
 type OrgRepository interface {
 	CreateOrganization(ctx context.Context, org *domain.Organization) error
+	GetOrganizationByID(ctx context.Context, id string) (*domain.Organization, error)
+	UpdateOrganization(ctx context.Context, org *domain.Organization) error
+	DeleteOrganization(ctx context.Context, id string) error
+	ListOrganizations(ctx context.Context, userID string) ([]*domain.Organization, error)
+	GetMember(ctx context.Context, orgID, userID string) (*domain.OrganizationMember, error)
+	GetOrganizationMembers(ctx context.Context, orgID string) ([]*domain.OrganizationMemberDetail, error)
+	UpdateOrganizationMember(ctx context.Context, member *domain.OrganizationMember) error
+	RemoveOrganizationMember(ctx context.Context, orgID, userID string) error
 	AddMember(ctx context.Context, member *domain.OrganizationMember) error
 	CreateShift(ctx context.Context, shift *domain.Shift) error
 	CreateGroup(ctx context.Context, group *domain.Group) error

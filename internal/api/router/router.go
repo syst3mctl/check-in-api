@@ -24,10 +24,17 @@ func New(authHandler *handler.AuthHandler, orgHandler *handler.OrgHandler, atten
 
 		// Organizations
 		r.Post("/organizations", orgHandler.CreateOrganization)
+		r.Get("/organizations", orgHandler.ListOrganizations)
+		r.Get("/organizations/{org_id}", orgHandler.GetOrganization)
+		r.Put("/organizations/{org_id}", orgHandler.UpdateOrganization)
+		r.Delete("/organizations/{org_id}", orgHandler.DeleteOrganization)
 		r.Post("/organizations/{org_id}/invitations", orgHandler.InviteEmployee)
 		r.Post("/organizations/{org_id}/shifts", orgHandler.CreateShift)
 		r.Post("/organizations/{org_id}/groups", orgHandler.CreateGroup)
 		r.Put("/organizations/{org_id}/members/{user_id}", orgHandler.AssignUserToGroup)
+		r.Get("/organizations/{org_id}/employees", orgHandler.GetEmployees)
+		r.Put("/organizations/{org_id}/employees/{user_id}", orgHandler.UpdateEmployee)
+		r.Delete("/organizations/{org_id}/employees/{user_id}", orgHandler.RemoveEmployee)
 
 		// Tasks
 		r.Post("/organizations/{org_id}/tasks", attendanceHandler.CreateTask)

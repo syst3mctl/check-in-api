@@ -20,6 +20,11 @@ type OrganizationMember struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
+type OrganizationMemberDetail struct {
+	OrganizationMember
+	User User `json:"user"`
+}
+
 type Shift struct {
 	ID                 string    `json:"id"`
 	OrgID              string    `json:"org_id"`
@@ -49,4 +54,9 @@ type InviteEmployeeRequest struct {
 
 type AssignUserToGroupRequest struct {
 	GroupID string `json:"group_id" validate:"required,uuid"`
+}
+
+type UpdateEmployeeRequest struct {
+	Role    string  `json:"role" validate:"required,oneof=MANAGER EMPLOYEE"`
+	GroupID *string `json:"group_id" validate:"omitempty,uuid"`
 }

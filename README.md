@@ -5,7 +5,7 @@ A robust REST API for managing employee attendance, organizations, shifts, and t
 ## Features
 
 - **Authentication**: User registration and login with JWT-based authentication.
-- **Organization Management**: Create organizations, invite employees, and manage roles (OWNER, ADMIN, MEMBER).
+- **Organization Management**: Create organizations, invite employees, and manage roles (OWNER, MANAGER, EMPLOYEE). Owners and Managers can view, update, and remove employees.
 - **Shift & Group Management**: Define shifts with specific working hours and assign users to groups.
 - **Attendance Tracking**:
   - General Check-in/out.
