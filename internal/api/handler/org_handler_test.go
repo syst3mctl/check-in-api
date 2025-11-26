@@ -134,6 +134,21 @@ func TestCreateOrganization(t *testing.T) {
 			expectedStatus: http.StatusCreated,
 		},
 		{
+			name: "Duplicate Organization",
+			input: domain.Organization{
+				Name:                "Duplicate Org",
+				Email:               "duplicate@example.com",
+				DefaultLocationLat:  10.0,
+				DefaultLocationLong: 20.0,
+			},
+			mockSetup: func(m *MockOrgRepository) {
+				m.On("CreateOrganization", mock.Anything, mock.MatchedBy(func(o *domain.Organization) bool {
+					return o.Email == "duplicate@example.com"
+				})).Return(&domain.DuplicateError{Field: "email"})
+			},
+			expectedStatus: http.StatusConflict,
+		},
+		{
 			name: "Invalid Input",
 			input: domain.Organization{
 				Name: "", // Missing name

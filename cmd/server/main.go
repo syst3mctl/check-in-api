@@ -49,12 +49,14 @@ func main() {
 
 	// Services
 	authService := service.NewAuthService(userRepo, cfg)
+	userService := service.NewUserService(userRepo)
 	orgService := service.NewOrgService(orgRepo, userRepo, db)
 	attService := service.NewAttendanceService(attRepo)
 	reportService := service.NewReportService(reportRepo)
 
 	// Handlers
 	authHandler := handler.NewAuthHandler(authService)
+	userHandler := handler.NewUserHandler(userService)
 	orgHandler := handler.NewOrgHandler(orgService)
 	attHandler := handler.NewAttendanceHandler(attService)
 	reportHandler := handler.NewReportHandler(reportService)
@@ -63,7 +65,7 @@ func main() {
 	authMiddleware := middleware.NewAuthMiddleware(cfg)
 
 	// Router
-	r := router.New(authHandler, orgHandler, attHandler, reportHandler, authMiddleware)
+	r := router.New(authHandler, userHandler, orgHandler, attHandler, reportHandler, authMiddleware)
 
 	srv := &http.Server{
 		Addr:    ":" + cfg.Port,

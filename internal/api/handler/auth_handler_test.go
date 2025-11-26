@@ -43,6 +43,11 @@ func (m *MockUserRepository) GetUserByID(ctx context.Context, id string) (*domai
 	return args.Get(0).(*domain.User), args.Error(1)
 }
 
+func (m *MockUserRepository) UpdateUser(ctx context.Context, user *domain.User) error {
+	args := m.Called(ctx, user)
+	return args.Error(0)
+}
+
 func TestRegister(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -189,6 +194,54 @@ func TestLogin(t *testing.T) {
 			rr := httptest.NewRecorder()
 
 			authHandler.Login(rr, req)
+
+			assert.Equal(t, tt.expectedStatus, rr.Code)
+			mockRepo.AssertExpectations(t)
+		})
+	}
+}
+
+func TestRefreshToken(t *testing.T) {
+	tests := []struct {
+		name           string
+		input          domain.RefreshTokenRequest
+		mockSetup      func(*MockUserRepository)
+		expectedStatus int
+	}{
+		{
+			name: "Invalid Token",
+			input: domain.RefreshTokenRequest{
+				RefreshToken: "invalid-token",
+			},
+			mockSetup: func(m *MockUserRepository) {
+			},
+			expectedStatus: http.StatusUnauthorized,
+		},
+		{
+			name: "Missing Token",
+			input: domain.RefreshTokenRequest{
+				RefreshToken: "",
+			},
+			mockSetup: func(m *MockUserRepository) {
+			},
+			expectedStatus: http.StatusBadRequest,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockRepo := new(MockUserRepository)
+			tt.mockSetup(mockRepo)
+
+			cfg := &config.Config{JWTSecret: "testsecret"}
+			authService := service.NewAuthService(mockRepo, cfg)
+			authHandler := NewAuthHandler(authService)
+
+			body, _ := json.Marshal(tt.input)
+			req, _ := http.NewRequest("POST", "/auth/refresh", bytes.NewBuffer(body))
+			rr := httptest.NewRecorder()
+
+			authHandler.RefreshToken(rr, req)
 
 			assert.Equal(t, tt.expectedStatus, rr.Code)
 			mockRepo.AssertExpectations(t)

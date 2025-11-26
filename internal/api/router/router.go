@@ -10,7 +10,7 @@ import (
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 
-func New(authHandler *handler.AuthHandler, orgHandler *handler.OrgHandler, attendanceHandler *handler.AttendanceHandler, reportHandler *handler.ReportHandler, authMiddleware *middleware.AuthMiddleware) *chi.Mux {
+func New(authHandler *handler.AuthHandler, userHandler *handler.UserHandler, orgHandler *handler.OrgHandler, attendanceHandler *handler.AttendanceHandler, reportHandler *handler.ReportHandler, authMiddleware *middleware.AuthMiddleware) *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Use(chiMiddleware.Logger)
@@ -18,9 +18,15 @@ func New(authHandler *handler.AuthHandler, orgHandler *handler.OrgHandler, atten
 
 	r.Post("/auth/register", authHandler.Register)
 	r.Post("/auth/login", authHandler.Login)
+	r.Post("/auth/refresh", authHandler.RefreshToken)
 
 	r.Group(func(r chi.Router) {
 		r.Use(authMiddleware.Handle)
+
+		// User
+		r.Get("/me", userHandler.GetMe)
+		r.Put("/update-profile", userHandler.UpdateProfile)
+		r.Post("/logout", userHandler.Logout)
 
 		// Organizations
 		r.Post("/organizations", orgHandler.CreateOrganization)

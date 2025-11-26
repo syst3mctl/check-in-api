@@ -126,6 +126,13 @@ definitions:
       user_id:
         type: string
     type: object
+  domain.RefreshTokenRequest:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
   domain.RegisterRequest:
     properties:
       email:
@@ -200,6 +207,13 @@ definitions:
         type: string
     required:
     - title
+    type: object
+  domain.TokenPair:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
     type: object
   domain.UpdateEmployeeRequest:
     properties:
@@ -317,6 +331,36 @@ paths:
       summary: Login user
       tags:
       - Auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Get a new access token using a refresh token
+      parameters:
+      - description: Refresh Token Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.RefreshTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.TokenPair'
+        "400":
+          description: invalid request body or validation errors
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+        "401":
+          description: unauthorized
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+      summary: Refresh access token
+      tags:
+      - Auth
   /auth/register:
     post:
       consumes:
@@ -347,6 +391,46 @@ paths:
       summary: Register a new user
       tags:
       - Auth
+  /logout:
+    post:
+      consumes:
+      - application/json
+      description: Logout the user (client-side token removal, server-side placeholder)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Logout user
+      tags:
+      - User
+  /me:
+    get:
+      consumes:
+      - application/json
+      description: Get profile of the authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.User'
+        "401":
+          description: unauthorized
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+      summary: Get current user profile
+      tags:
+      - User
   /organizations:
     get:
       consumes:
@@ -826,6 +910,40 @@ paths:
       summary: Create a task
       tags:
       - Task
+  /update-profile:
+    put:
+      consumes:
+      - application/json
+      description: Update profile of the authenticated user
+      parameters:
+      - description: Update Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.User'
+        "400":
+          description: invalid request body or validation errors
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+        "401":
+          description: unauthorized
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+      summary: Update user profile
+      tags:
+      - User
 securityDefinitions:
   BearerAuth:
     in: header

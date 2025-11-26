@@ -69,3 +69,14 @@ func (r *UserRepository) GetUserByID(ctx context.Context, id string) (*domain.Us
 	}
 	return user, nil
 }
+
+func (r *UserRepository) UpdateUser(ctx context.Context, user *domain.User) error {
+	query := `
+		UPDATE users
+		SET full_name = $1, phone_number = $2
+		WHERE id = $3
+	`
+	executor := r.db.GetExecutor(ctx)
+	_, err := executor.Exec(ctx, query, user.FullName, user.PhoneNumber, user.ID)
+	return err
+}

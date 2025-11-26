@@ -2,7 +2,9 @@ package postgres
 
 import (
 	"context"
+	"errors"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/syst3mctl/check-in-api/internal/core/domain"
 	"github.com/syst3mctl/check-in-api/internal/core/port"
 )
@@ -22,8 +24,22 @@ func (r *OrgRepository) CreateOrganization(ctx context.Context, org *domain.Orga
 		RETURNING id, created_at
 	`
 	executor := r.db.GetExecutor(ctx)
-	return executor.QueryRow(ctx, query, org.Name, org.Email, org.DefaultLocationLat, org.DefaultLocationLong).
+	err := executor.QueryRow(ctx, query, org.Name, org.Email, org.DefaultLocationLat, org.DefaultLocationLong).
 		Scan(&org.ID, &org.CreatedAt)
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			if pgErr.ConstraintName == "organizations_email_key" {
+				return &domain.DuplicateError{Field: "email"}
+			}
+			// If we had name unique constraint:
+			// if pgErr.ConstraintName == "organizations_name_key" {
+			// 	return &domain.DuplicateError{Field: "name"}
+			// }
+		}
+		return err
+	}
+	return nil
 }
 
 func (r *OrgRepository) GetOrganizationByID(ctx context.Context, id string) (*domain.Organization, error) {

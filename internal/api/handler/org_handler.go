@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/syst3mctl/check-in-api/internal/core/domain"
@@ -47,6 +48,11 @@ func (h *OrgHandler) CreateOrganization(w http.ResponseWriter, r *http.Request) 
 
 	org, err := h.svc.CreateOrganization(r.Context(), userID, &req)
 	if err != nil {
+		var dupErr *domain.DuplicateError
+		if errors.As(err, &dupErr) {
+			response.WriteError(w, http.StatusConflict, dupErr.Error())
+			return
+		}
 		response.WriteError(w, http.StatusInternalServerError, err.Error())
 		return
 	}

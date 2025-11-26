@@ -73,11 +73,43 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := h.svc.Login(r.Context(), &req)
+	tokenPair, err := h.svc.Login(r.Context(), &req)
 	if err != nil {
 		response.WriteError(w, http.StatusUnauthorized, err.Error())
 		return
 	}
 
-	response.WriteJSON(w, http.StatusOK, map[string]string{"token": token})
+	response.WriteJSON(w, http.StatusOK, tokenPair)
+}
+
+// RefreshToken godoc
+// @Summary Refresh access token
+// @Description Get a new access token using a refresh token
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param request body domain.RefreshTokenRequest true "Refresh Token Request"
+// @Success 200 {object} domain.TokenPair
+// @Failure 400 {object} domain.ErrorResponse "invalid request body or validation errors"
+// @Failure 401 {object} domain.ErrorResponse "unauthorized"
+// @Router /auth/refresh [post]
+func (h *AuthHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
+	var req domain.RefreshTokenRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		response.WriteError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	if errResp := validator.ValidateStruct(&req); errResp != nil {
+		response.WriteValidationError(w, errResp)
+		return
+	}
+
+	tokenPair, err := h.svc.RefreshToken(r.Context(), req.RefreshToken)
+	if err != nil {
+		response.WriteError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+
+	response.WriteJSON(w, http.StatusOK, tokenPair)
 }
